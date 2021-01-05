@@ -28,37 +28,42 @@ def verify_password(stored_password, provided_password):
 
 
 try:
-    with open("config.json", "r") as config_file:
-        config = loads(config_file.read())
-        config_file.close()
-except FileExistsError:
-    print("ERROR: config.json file does not exists.")
-    exit(1)
+    f = input("Slang file path: ")
 
-psw = input("Password: ")
+    try:
+        with open(f, "r") as config_file:
+            try:
+                config = loads(config_file.read())
+                config_file.close()
+            except JSONDecodeError:
+                print("ERROR: JSON decode error.")
+                exit(1)
+    except FileNotFoundError:
+        print(f"ERROR: {f} file does not exists.")
+        exit(1)
 
-if not verify_password(config["password-hash"], psw):
-    print("Wrong password.")
-    exit(1)
+    psw = input("Password: ")
 
-try:
-    with open(config["file-path"], "r") as slang_file:
-        try:
-            slang = loads(slang_file.read())
-            slang_file.close()
-        except JSONDecodeError:
-            print(f"ERROR: Error in decoding JSON in {config['file-path']} file.")
-            exit(1)
-except FileExistsError:
-    print(f"ERROR: {config['file-path']} file does not exists.")
-    exit(1)
+    if not verify_password(config["password-hash"], psw):
+        print("Wrong password.")
+        exit(1)
+
+    slang = config["words"]
+except KeyboardInterrupt:
+    exit(0)
 
 while True:
-    a = input("Type sentence or 'q' to quit: ")
-    if a == "q":
-        break
-    else:
-        for word in slang.keys():
-            if word in a:
-                a = a.replace(word, choice(slang[word]))
-        print("\nSentence in slang:", a)
+    try:
+        a = input("Type sentence or 'q' to quit: ")
+        if a == "q":
+            break
+        else:
+            for word in slang.keys():
+                if word in a:
+                    if not isinstance(slang[word], list):
+                        print("ERROR: JSON decode error.")
+                        exit(1)
+                    a = a.replace(word, choice(slang[word]))
+            print("\nSentence in slang:", a)
+    except KeyboardInterrupt:
+        exit(0)
